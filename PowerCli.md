@@ -1,6 +1,10 @@
-### Basic tasks on vCenter using PowerCLI:
+## Basic tasks on vCenter using PowerCLI:
 
 * [Get host information](#Get-host-information)
+
+
+
+
 
 ## Get host information
 ```powershell
