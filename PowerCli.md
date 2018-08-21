@@ -1,34 +1,8 @@
 ### Basic tasks on vCenter using PowerCLI:
 
-Bla
+* [Get host information](#Get-host-information)
 
-
-Blah
-Blah
-Blah
-Blah
-Blah
-Blah
-Blah
-Blah
-Blah
-Blah
-Blah
-BlahBlah
-Blah
-
-Blah
-Blah
-
-
-Blah
-Blah
-
-
-Blah
-Blah
-
-
+## Get host information
 ```powershell
 Get-VMHost -name 172.17.1.1
 ```
