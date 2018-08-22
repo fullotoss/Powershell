@@ -121,7 +121,7 @@ Get-VMHost -Name $hostname | Get-VMHostNetworkAdapter -VMKernel | where { $_.IP 
 ```powershell
 $VLAN = "2480"
 $portGroup = Get-VirtualPortgroup -VMHost $vmhost -Name "ManagementNetwork" -VirtualSwitch $vswitch0
-Set-VirtualPortGroup -VirtualPortGroup $portGroup -VlanId $VLAN\
+Set-VirtualPortGroup -VirtualPortGroup $portGroup -VlanId $VLAN
 ```
 
 ## Remove the first vmk
@@ -213,6 +213,23 @@ foreach ($vmhost in (Get-VMHost -Name 172.31.14.[1-2]*))
 }
 ```
 
+
+## list all the networks that are being used
+```powershell
+#This is flawed, it does provide the output we need, but I need to work on the logic whenever i get a chance (most likely never)
+$networkAdapters= @()
+foreach ($vmhost in (Get-VMHost -Name m2vcdesx0216*))
+{
+	foreach ($VMs in ((Get-VMhost $vmhost | Get-View).VM | Get-VIObjectByVIView))
+	{
+		#Write-Host $VMs
+		$networkAdapters += Get-NetworkAdapter -VM $VMs | Foreach {$_.NetworkName}  | ft -autosize -wrap | out-string
+		#$output = Get-NetworkAdapter -VM $VMs | Foreach {$_.NetworkName}  | ft -autosize -wrap
+		#$output
+	}
+}
+$networkAdapters | Select -uniq
+```
 
 
 
