@@ -34,8 +34,8 @@ $vmHostNetworkInfo = Get-VmHostNetwork -Host m2vcdesx010101
 Set-VmHostNetwork -Network $vmHostNetworkInfo -VMKernelGateway 172.31.14.62
 ```
 
-```powershell
 ## Remove vSwitch
+```powershell
 $vswitch =  Get-VirtualSwitch -VMHost $vmhost -Name vSwitch1
 Remove-VirtualSwitch -VirtualSwitch $vswitch -confirm:$false
 ```
