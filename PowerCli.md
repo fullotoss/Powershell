@@ -22,6 +22,24 @@ New-VirtualPortGroup -VirtualSwitch $vs -Name Customer_24050-V2480-ESXManagement
 Get-VMHost -name 172.31.14.* | Foreach {Start-VMHostService -HostService ($_ | Get-VMHostService | Where { $_.Key -eq "TSM-SSH"} )}
 ```
 
+## Stop SSH on all the host
+```powershell
+Get-VMHost -name 172.31.14.* | Foreach {Stop-VMHostService -HostService ($_ | Get-VMHostService | Where { $_.Key -eq "TSM-SSH"} )}
+```
+
+
+## Modify gateway
+```powershell
+$vmHostNetworkInfo = Get-VmHostNetwork -Host m2vcdesx010101
+Set-VmHostNetwork -Network $vmHostNetworkInfo -VMKernelGateway 172.31.14.62
+```
+
+```powershell
+## Remove vSwitch
+$vswitch =  Get-VirtualSwitch -VMHost $vmhost -Name vSwitch1
+Remove-VirtualSwitch -VirtualSwitch $vswitch -confirm:$false
+```
+
 
 
 
