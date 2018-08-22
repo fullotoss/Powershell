@@ -1,0 +1,69 @@
+
+#Create vSwitch1 and customer network at IC1
+esxcli network vswitch standard add --vswitch-name=vSwitch1
+esxcli network vswitch standard portgroup add --portgroup-name=Customer_24050-1634-DMZ-MXVLN12521001 --vswitch-name=vSwitch1
+esxcli network vswitch standard portgroup set -p Customer_24050-1634-DMZ-MXVLN12521001 --vlan-id 1634
+esxcli network vswitch standard portgroup add --portgroup-name=Customer_24050-1704-ZCCC-MXVLN12521001 --vswitch-name=vSwitch1
+esxcli network vswitch standard portgroup set -p Customer_24050-1704-ZCCC-MXVLN12521001  --vlan-id 1704
+esxcli network vswitch standard portgroup add --portgroup-name=Customer_24050-1635-App-MXVLN12521001 --vswitch-name=vSwitch1
+esxcli network vswitch standard portgroup set -p Customer_24050-1635-App-MXVLN12521001 --vlan-id 1635
+esxcli network vswitch standard portgroup add --portgroup-name=Customer_24050-1638-Database-MXVLN12521001 --vswitch-name=vSwitch1
+esxcli network vswitch standard portgroup set -p Customer_24050-1638-Database-MXVLN12521001 --vlan-id 1638
+esxcli network vswitch standard portgroup add --portgroup-name=Customer_24050-1636-Dev-MXVLN12521001 --vswitch-name=vSwitch1
+esxcli network vswitch standard portgroup set -p Customer_24050-1636-Dev-MXVLN12521001 --vlan-id 1636
+esxcli network vswitch standard portgroup add --portgroup-name=Customer_24050-1637-Tst-MXVLN12521001 --vswitch-name=vSwitch1
+esxcli network vswitch standard portgroup set -p Customer_24050-1637-Tst-MXVLN12521001 --vlan-id 1637
+
+#Create management interface:
+esxcli network vswitch standard portgroup add --portgroup-name=ManagementNetwork --vswitch-name=vSwitch0
+esxcli network ip interface add --interface-name=vmk2 --portgroup-name=ManagementNetwork 
+esxcli network ip interface ipv4 set --interface-name=vmk2 --ipv4=172.31.14.2 --netmask=255.255.255.192 --type=static
+esxcli network vswitch standard portgroup set -p ManagementNetwork --vlan-id 2111
+esxcli network ip interface tag add -i vmk2 -t Management
+
+#esxcfg-route -l to check the current routes
+#Adding static routes
+esxcli network ip route ipv4 add -g 172.31.14.62 -n 10.135.2.72/32
+esxcli network ip route ipv4 add -g 172.31.14.62 -n 10.125.8.120/32
+esxcli network ip route ipv4 add -g 172.31.14.62 -n 10.117.0.10/32
+
+#After the change, change the gateway
+esxcfg-route -a default 172.31.14.62
+
+#And remove the static routes
+esxcli network ip route ipv4 remove -n 10.135.2.72/32 -g 172.31.14.62
+esxcli network ip route ipv4 remove -n 10.125.8.120/32 -g 172.31.14.62
+esxcli network ip route ipv4 remove -n 10.117.0.10/32 -g 172.31.14.62
+
+#this command should give you 2 different port IDs, pick the Port ID for vmnic2
+esxcli network vswitch dvs vmware list | grep vmnic -A4 | egrep "Port ID|Client"
+esxcfg-vswitch -Q vmnic -V <PortID> dvSwitch
+
+esxcli network vswitch standard uplink add --uplink-name=vmnic3 --vswitch-name=vSwitch1 # add an uplink
+#esxcli network vswitch standard list
+
+#esxcli network vswitch standard policy failover get -v vSwitch1
+esxcli network vswitch standard uplink add --uplink-name=vmnic2 --vswitch-name=vSwitch1
+
+#mark the vmnic as active
+esxcli network vswitch standard policy failover set -a vmnic3 -v vSwitch1
+
+#Add multiple VMNICS
+#esxcli network vswitch standard policy failover set -a vmnic3,vmnic2 -v vSwitch1
+
+Create vSwitch1 and customer network at IC2
+esxcli network vswitch standard add --vswitch-name=vSwitch1
+esxcli network vswitch standard portgroup add --portgroup-name=Customer_24050-2302-DMZ-MXVLN12521001 --vswitch-name=vSwitch1
+esxcli network vswitch standard portgroup set -p Customer_24050-2302-DMZ-MXVLN12521001 --vlan-id 2302
+esxcli network vswitch standard portgroup add --portgroup-name=Customer_24050-2336-ZCCC-MXVLN12521001 --vswitch-name=vSwitch1
+esxcli network vswitch standard portgroup set -p Customer_24050-2336-ZCCC-MXVLN12521001  --vlan-id 2336
+esxcli network vswitch standard portgroup add --portgroup-name=Customer_24050-2303-App-MXVLN12521001 --vswitch-name=vSwitch1
+esxcli network vswitch standard portgroup set -p Customer_24050-2303-App-MXVLN12521001 --vlan-id 2303
+esxcli network vswitch standard portgroup add --portgroup-name=Customer_24050-2311-Database-MXVLN12521001 --vswitch-name=vSwitch1
+esxcli network vswitch standard portgroup set -p Customer_24050-2311-Database-MXVLN12521001 --vlan-id 2311
+esxcli network vswitch standard portgroup add --portgroup-name=Customer_24050-2304-Dev-MXVLN12521001 --vswitch-name=vSwitch1
+esxcli network vswitch standard portgroup set -p Customer_24050-2304-Dev-MXVLN12521001 --vlan-id 2304
+esxcli network vswitch standard portgroup add --portgroup-name=Customer_24050-2305-Tst-MXVLN12521001 --vswitch-name=vSwitch1
+esxcli network vswitch standard portgroup set -p Customer_24050-2305-Tst-MXVLN12521001 --vlan-id 2305
+
+
