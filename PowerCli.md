@@ -117,6 +117,103 @@ Set-VirtualPortGroup -VirtualPortGroup $portGroup -VlanId $VLAN
 Get-VMHost -Name $hostname | Get-VMHostNetworkAdapter -VMKernel | where { $_.IP -eq $IP } | Set-VMHostNetworkAdapter -ManagementTrafficEnabled $true -confirm:$false
 ```
 
+## Configuring VLAN for a port group
+```powershell
+$VLAN = "2480"
+$portGroup = Get-VirtualPortgroup -VMHost $vmhost -Name "ManagementNetwork" -VirtualSwitch $vswitch0
+Set-VirtualPortGroup -VirtualPortGroup $portGroup -VlanId $VLAN\
+```
+
+## Remove the first vmk
+```powershell
+$network = Get-VMHostNetwork -VMhost $vmhost
+$network.VirtualNic[0] 
+#Remove-VMHostNetworkAdapter $network.VirtualNic[0] 
+```
+
+## Verify that the port group has been added to the switch
+```powershell
+Get-VirtualPortGroup -VirtualSwitch $vswitch0
+```
+
+## Verify that the IP is good on the VMKernel port
+```powershell
+Get-VMHost -Name $hostname | Get-VMHostNetworkAdapter -VMKernel
+```
+
+
+## Replicate or migrate networks for vSwitch
+```powershell
+$baseHost = Get-VMHost -Name mtvcdesx02034*
+$newHost = Get-VMHost -Name mtvcdesx02035*
+$switchName = "vSwitch1"
+$baseHost |Get-VirtualSwitch -name $switchName | Foreach {
+    $newHost | New-VirtualSwitch -Name $_.Name -Mtu $_.Mtu
+    $vSwitch = $_ 
+    $_ | Get-VirtualPortGroup | Foreach {
+    	Write-Host "Creating port group $($_.Name)"
+   		$NewPortGroup = $newHost | Get-VirtualSwitch -Name $vSwitch | New-VirtualPortGroup -Name $_.Name -VLanId $_.VLanID
+    }
+}
+```
+
+
+## Show all VMs inside the host with its network
+```powershell
+$hostname = "mtvcdesx02037.global.intellicentre.org.au"
+foreach ($VMs in ((Get-VMhost $hostname | Get-View).VM | Get-VIObjectByVIView))
+{
+	Write-Host $VMs
+	Get-NetworkAdapter -VM $VMs | ft -autosize -wrap
+}
+```
+
+## VLAN migration or change VLAN
+```powershell
+$NetworkContainer=@("Customer_24050-V2302-DMZ-M1VLN12521001","Customer_24050-2302-DMZ-MXVLN12521001"),("Customer_24050-V2336-ZCCC-MXVLN12521001","Customer_24050-2336-ZCCC-MXVLN12521001"),("Customer_24050-V2303-App-M1VLN12521001","Customer_24050-2303-App-MXVLN12521001"),("Customer_24050-V558-Management-M1VLN12521001","Customer_24050-558-Management-M1VLN12521001"),("Customer_24050-V2305-Tst-MXVLN12521001","Customer_24050-2305-Tst-MXVLN12521001"),("Customer_93111-V90-ZertoVRA","Customer_24050-558-Management-M1VLN12521001")  
+
+function SetNetworkAdapter{
+Param ($VMs, $adapterName, $oldNetwork, $newNetwork, $networkAdapterNumber)
+	if($adapterName -match $oldNetwork){
+		Write-Host  "Modifying " $oldNetwork " on " $VMs " to " $newNetwork " on "  $networkAdapterNumber
+		Get-VM -Name $VMs | Get-NetworkAdapter -Name $networkAdapterNumber | Set-NetworkAdapter -NetworkName $newNetwork -Confirm:$false
+	}
+}
+
+foreach ($vmhost in (Get-VMHost -Name m2vcdesx02163.global.intellicentre.org.au))
+{
+	foreach ($VMs in ((Get-VMhost $vmhost | Get-View).VM | Get-VIObjectByVIView))
+	{
+			$adapters = Get-VM -Name $VMs | Get-NetworkAdapter
+			ForEach($adapter in $adapters){
+				for ($pos=0;$pos -le $NetworkContainer.length-1;$pos++)
+				{	
+					#Old Network = $NetworkContainer[$pos][0]
+					#New Network = $NetworkContainer[$pos][1]
+					SetNetworkAdapter $VMs $adapter.NetworkName $NetworkContainer[$pos][0] $NetworkContainer[$pos][1] $adapter.Name
+				}
+			}
+	}
+	Get-VMhost -Name $vmhost | Get-VMHostNetworkAdapter -Physical -Name vmnic2 | Remove-VDSwitchPhysicalNetworkAdapter -confirm:$false
+	$vs = Get-VirtualSwitch -name vSwitch1 -VMHost $vmhost
+	Set-VirtualSwitch -VirtualSwitch $vs -Nic vmnic3,vmnic2
+}
+```
+
+## Backup of the network adapters
+```powershell
+foreach ($vmhost in (Get-VMHost -Name 172.31.14.[1-2]*))
+{
+	foreach ($VMs in ((Get-VMhost $vmhost | Get-View).VM | Get-VIObjectByVIView))
+	{
+		$output = Get-NetworkAdapter -VM $VMs | Select NetworkName
+		Write-Host $VMs
+		Write-Host " " $output
+	}
+}
+```
+
+
 
 
 
